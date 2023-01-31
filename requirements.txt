@@ -1,0 +1,13 @@
+google_api_python_client==2.71.0
+google_auth_oauthlib==0.5.2
+numpy==1.21.5
+pandas==1.4.4
+sympy==1.10.1
+plotly==5.9.0
+protobuf==3.19.4
+statsmodels==0.13.2
+streamlit==1.15.2
+streamlit_aggrid==0.3.3
+openai==0.26.1
+bokeh==2.4.3
+streamlit_bokeh_events==0.1.2
