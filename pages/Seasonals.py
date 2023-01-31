@@ -120,15 +120,26 @@ if True:
     # col1, col2 = st.columns([1,1])
     tab1, tab2 = st.tabs(['Simple Ticker', 'Custom Expressions'])
     with tab1:
-        ticker_selection = st.selectbox('',['']+options, key='y_ticker', on_change=y_ticker_on_change)
+        col1, col2 = st.columns([4,1])
+        with col1:
+            ticker_selection = st.selectbox('Ticker',['']+options, key='y_ticker', on_change=y_ticker_on_change)
+        with col2:
+            ticker_var = st.selectbox('Variable',var_options, var_options.index('close_price'),  key='ticker_var', on_change=sec_selection_on_change)
+
     with tab2:
-        expression_selection = st.text_input("'July Nov':  s n - s x, 'Dec wheat-corn': w z - c z, 'Soy Corn Ratio': s x / c z, etc...", key='y_expression', on_change=y_expression_on_change)
- 
+        col1, col2 = st.columns([4,1])
+        with col1:
+            expression_selection = st.text_input("'July Nov':  s n - s x, 'Dec wheat-corn': w z - c z, 'Soy Corn Ratio': s x / c z, etc...", key='y_expression', on_change=y_expression_on_change)
+        with col2:
+            expression_var = st.selectbox('Variable',var_options, var_options.index('close_price'),  key='expression_var', on_change=sec_selection_on_change)
+
     expression=''
     if ticker_selection!='':
         expression=ticker_selection
+        var_selection=ticker_var
     elif expression_selection!='':
         expression=expression_selection
+        var_selection=expression_var
         
     if (expression == ''): st.stop()
 
@@ -136,10 +147,6 @@ if True:
     options=pd.date_range(seas_interval[0]-pd.DateOffset(months=18), seas_interval[1]+pd.DateOffset(months=18))
     chart_placeholder=st.empty()
     date_start, date_end = st.select_slider('Seasonals Window', options=options, value=(seas_interval[0], seas_interval[1]), format_func=format_timeframe_date, on_change=sec_selection_on_change)
-    # date_start, date_end = st.select_slider('Seasonals Window', options=options, value=(options[0], options[-1]), on_change=sec_selection_on_change)
-
-    with st.sidebar:
-        var_selection = st.selectbox('Variable',var_options, var_options.index('close_price'),  key='var_selection', on_change=sec_selection_on_change)
 
 # Calculations
 if True:    
