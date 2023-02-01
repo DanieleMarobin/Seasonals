@@ -82,8 +82,9 @@ if True:
                 
         return fo
     
-    def read_security(sec, cloud=False, service=None):
-        if gd.is_cloud_id(sec):
+
+    def read_security(sec, cloud=False, service=None, check_cloud_id = False):
+        if check_cloud_id and gd.is_cloud_id(sec):
             file=sec
         else:
             if '_' not in sec:
