@@ -82,7 +82,6 @@ if True:
                 
         return fo
     
-
     def read_security(sec, cloud=False, service=None, check_cloud_id = False):
         if check_cloud_id and gd.is_cloud_id(sec):
             file=sec
@@ -101,11 +100,15 @@ if True:
 
         return df
 
-    def read_calendar():
+    def read_calendar(service=None):
         file = SEC_DIR+ 'all_calendar.csv'
-        df=gd.read_csv(file,parse_dates=['start','end'], dayfirst=True, index_col='security')
+        df=gd.read_csv(file,parse_dates=['start','end'], dayfirst=True, index_col='security', service=service)
         return df
-
+    
+    def read_dates(service=None):
+        file = SEC_DIR+ 'all_dates.csv'
+        df=gd.read_csv(file,parse_dates=['first_trade_date', 'first_notice_date', 'first_delivery_date', 'last_delivery_date', 'last_trade_date'], dayfirst=True, index_col='security', service=service)
+        return df
 # Securities elaborations
 if True:
     def calc_all_volatilities(df):
@@ -244,7 +247,6 @@ if True:
         for sec, d in sec_dfs.items():
             if (info_type(sec)!='future') and (info_maturity(sec)==0):
                 sel_sec.append(sec)
-        print(sel_sec)
 
         for sec in sel_sec:
             ticker=info_ticker(sec)
@@ -286,9 +288,7 @@ if True:
                     dfs.append(df)
 
             df=pd.concat(dfs)
-
             df=df.rename(columns={col:symb})
-
             df_list.append(df)
         
         df = reduce(lambda left, right: pd.merge(left , right,on = ["seas_day", "year"], how = "outer"),df_list)

@@ -10,6 +10,7 @@ if True:
     from bokeh.models import CustomJS, MultiSelect, AutocompleteInput
     from streamlit_bokeh_events import streamlit_bokeh_events
     import pandas as pd
+    import warnings; warnings.filterwarnings("ignore")
 
     import Prices as up
     import Charts as uc
@@ -23,11 +24,14 @@ if True:
 
     if 'cloud_map_dict' not in st.session_state:
         st.session_state['cloud_map_dict']=up.get_cloud_sec_map(service=service)
+    if 'all_dates' not in st.session_state:
+        st.session_state['all_dates']=up.read_dates(service=service)
     if 'seas_df' not in st.session_state:
         st.session_state['seas_df']=[]
     if 're_run' not in st.session_state:
         st.session_state['re_run']=True
     cloud_map_dict=st.session_state['cloud_map_dict']
+    all_dates=st.session_state['all_dates']
     
     var_options=['close_price',
     'open_price',
@@ -54,7 +58,6 @@ if True:
     # 'bvol_put_25d',
     ]
 
-    
 # Functions
 if True:
     def format_timeframe_date(item):
@@ -120,36 +123,45 @@ if True:
     # col1, col2 = st.columns([1,1])
     tab1, tab2 = st.tabs(['Simple Ticker', 'Custom Expressions'])
     with tab1:
-        col1, col2 = st.columns([4,1])
+        col1, col2,col3 = st.columns([4,1,0.5])
         with col1:
-            ticker_selection = st.selectbox('Ticker',['']+options, key='y_ticker', on_change=y_ticker_on_change)
+            ticker_selection = st.selectbox('Ticker',['']+options, key='y_ticker', on_change=y_ticker_on_change)            
         with col2:
             ticker_var = st.selectbox('Variable',var_options, var_options.index('close_price'),  key='ticker_var', on_change=sec_selection_on_change)
+        with col3:
+            ticker_range = st.number_input('Range (Months)',1,24,6,1,key='ticker_range', on_change=sec_selection_on_change)
 
     with tab2:
-        col1, col2 = st.columns([4,1])
+        col1, col2,col3 = st.columns([4,1,0.5])
         with col1:
             expression_selection = st.text_input("'July Nov':  s n - s x, 'Dec wheat-corn': w z - c z, 'Soy Corn Ratio': s x / c z, etc...", key='y_expression', on_change=y_expression_on_change)
         with col2:
             expression_var = st.selectbox('Variable',var_options, var_options.index('close_price'),  key='expression_var', on_change=sec_selection_on_change)
+        with col3:
+            expression_range = st.number_input('Range (Months)',1,24,6,1,key='expression_range', on_change=sec_selection_on_change)
 
     expression=''
     if ticker_selection!='':
         expression=ticker_selection
         var_selection=ticker_var
+        seas_range=ticker_range
+
     elif expression_selection!='':
         expression=expression_selection
         var_selection=expression_var
+        seas_range=expression_range
         
     if (expression == ''): st.stop()
-
-    seas_interval=[dt.date(dt.today()-pd.DateOffset(months=6)+pd.DateOffset(days=1)), dt.date(dt.today()+pd.DateOffset(months=6))]
-    options=pd.date_range(seas_interval[0]-pd.DateOffset(months=18), seas_interval[1]+pd.DateOffset(months=18))
-    chart_placeholder=st.empty()
-    date_start, date_end = st.select_slider('Seasonals Window', options=options, value=(seas_interval[0], seas_interval[1]), format_func=format_timeframe_date, on_change=sec_selection_on_change)
+    
+    seas_interval=[dt.date(dt.today()-pd.DateOffset(months=6)+pd.DateOffset(days=1)), dt.date(dt.today()+pd.DateOffset(months=seas_range))]
+    
+    # options=pd.date_range(dt.today()-pd.DateOffset(months=18), dt.today()+pd.DateOffset(months=24))
+    # chart_placeholder=st.empty()
+    # date_start, date_end = st.select_slider('Seasonals Window', options=options, value=(seas_interval[0], seas_interval[1]), format_func=format_timeframe_date, on_change=sec_selection_on_change)
 
 # Calculations
-if True:    
+if True:   
+    fnd=[] 
     seas_df = st.session_state['seas_df']
 
     # Core Calc
@@ -163,21 +175,26 @@ if True:
             for s in symbols:
                 sel_sec=sel_sec+up.select_securities(ticker_and_letter=up.info_ticker_and_letter(up.symbol_no_offset(s)), cloud_map_dict=cloud_map_dict)
             
-            # sec_dfs = {'w n_2020' : df}
+            # sec_dfs = {'w n_2020' : df}            
             sec_dfs= up.read_security_list(sel_sec, parallel='thread')
             sec_dfs=sec_dfs_special_cases(sec_dfs, special_cases)
 
         with st.spinner('Making the Seasonals Calculation...'):
+            ref_year=dt.today().year
+            fnd=min([all_dates.loc[sec]['first_notice_date'] for sec in sel_sec if up.info_maturity(sec).year==ref_year])
+            
             if '_skew_' in var_selection:
                 for key, df in sec_dfs.items():
                     df['implied_vol_dm_skew_25d']=df['implied_vol_dm_call_25d']-df['implied_vol_dm_put_25d']
 
             sec_dfs=up.sec_dfs_simple_sec(sec_dfs)
 
-            st.session_state['seas_df']=up.create_seas_df(expression, sec_dfs, var_selection, seas_interval= [date_start, date_end])
+            print('fnd:',fnd)
+
+            st.session_state['seas_df']=up.create_seas_df(expression, sec_dfs, var_selection, ref_year=ref_year, seas_interval= [seas_interval[0], min(fnd, seas_interval[1])])
             seas_df=st.session_state['seas_df']
     
-    with chart_placeholder:
+    if True:
         col1, col2, col3 = st.columns([12,0.5,1.5])
         # Years Selection
         with col3:
