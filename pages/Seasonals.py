@@ -123,41 +123,43 @@ if True:
     # col1, col2 = st.columns([1,1])
     tab1, tab2 = st.tabs(['Simple Ticker', 'Custom Expressions'])
     with tab1:
-        col1, col2,col3 = st.columns([4,1,0.5])
+        col1, col2, col3, col4 = st.columns([4,1,0.5,0.5])
         with col1:
             ticker_selection = st.selectbox('Ticker',['']+options, key='y_ticker', on_change=y_ticker_on_change)            
         with col2:
             ticker_var = st.selectbox('Variable',var_options, var_options.index('close_price'),  key='ticker_var', on_change=sec_selection_on_change)
         with col3:
-            ticker_range = st.number_input('Range (Months)',1,24,6,1,key='ticker_range', on_change=sec_selection_on_change)
+            ticker_range = st.number_input('Range (Months)',1,24,6,3,key='ticker_range', on_change=sec_selection_on_change)
+        with col4:
+            ticker_past_years = st.number_input('Past Years',1,100,10,5,key='ticker_years', on_change=sec_selection_on_change)
 
     with tab2:
-        col1, col2,col3 = st.columns([4,1,0.5])
+        col1, col2, col3, col4 = st.columns([4,1,0.5,0.5])
         with col1:
             expression_selection = st.text_input("'July Nov':  s n - s x, 'Dec wheat-corn': w z - c z, 'Soy Corn Ratio': s x / c z, etc...", key='y_expression', on_change=y_expression_on_change)
         with col2:
             expression_var = st.selectbox('Variable',var_options, var_options.index('close_price'),  key='expression_var', on_change=sec_selection_on_change)
         with col3:
-            expression_range = st.number_input('Range (Months)',1,24,6,1,key='expression_range', on_change=sec_selection_on_change)
+            expression_range = st.number_input('Range (Months)',1,24,6,3,key='expression_range', on_change=sec_selection_on_change)
+        with col4:
+            expression_past_years = st.number_input('Past Years',1,100,10,5,key='expression_years', on_change=sec_selection_on_change)
 
     expression=''
     if ticker_selection!='':
         expression=ticker_selection
         var_selection=ticker_var
         seas_range=ticker_range
+        past_years=ticker_past_years
 
     elif expression_selection!='':
         expression=expression_selection
         var_selection=expression_var
         seas_range=expression_range
+        past_years=expression_past_years
         
     if (expression == ''): st.stop()
     
-    seas_interval=[dt.date(dt.today()-pd.DateOffset(months=6)+pd.DateOffset(days=1)), dt.date(dt.today()+pd.DateOffset(months=seas_range))]
-    
-    # options=pd.date_range(dt.today()-pd.DateOffset(months=18), dt.today()+pd.DateOffset(months=24))
-    # chart_placeholder=st.empty()
-    # date_start, date_end = st.select_slider('Seasonals Window', options=options, value=(seas_interval[0], seas_interval[1]), format_func=format_timeframe_date, on_change=sec_selection_on_change)
+    seas_interval=[dt.date(dt.today()-pd.DateOffset(months=6)+pd.DateOffset(days=1)), dt.date(dt.today()+pd.DateOffset(months=seas_range))]    
 
 # Calculations
 if True:   
@@ -205,7 +207,7 @@ if True:
             options = ['mean'] + [f'{o}' for o in options]
             
             # Create the MultiSelect widget   
-            pre_selection=options[0: min(20,len(options))]
+            pre_selection=options[0: min(past_years, len(options))+2]
             bokeh_multiselect = MultiSelect(value=pre_selection, options=options, size = 40, width =100)
             bokeh_multiselect.js_on_change("value", CustomJS(args=dict(xx='Hello Daniele'), code='console.log(xx.toString());document.dispatchEvent(new CustomEvent("GET_OPTIONS", {detail: this.value}));'))
             sel_years = streamlit_bokeh_events(bokeh_multiselect,events="GET_OPTIONS",key='bokeh_multiselect_on_change', override_height=750, debounce_time=200, refresh_on_update=False)
