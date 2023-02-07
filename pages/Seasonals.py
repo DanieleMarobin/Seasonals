@@ -183,15 +183,18 @@ if True:
 
         with st.spinner('Making the Seasonals Calculation...'):
             ref_year=dt.today().year
-            fnd=min([all_dates.loc[sec]['first_notice_date'] for sec in sel_sec if up.info_maturity(sec).year==ref_year])
+            
+            fnd=[all_dates.loc[sec]['first_notice_date'] for sec in sel_sec if ((sec in all_dates.index) and (up.info_maturity(sec).year==ref_year))]
+            if len(fnd)>0:
+                fnd=min(fnd)
+            else:
+                fnd=seas_interval[1]
             
             if '_skew_' in var_selection:
                 for key, df in sec_dfs.items():
                     df['implied_vol_dm_skew_25d']=df['implied_vol_dm_call_25d']-df['implied_vol_dm_put_25d']
 
             sec_dfs=up.sec_dfs_simple_sec(sec_dfs)
-
-            print('fnd:',fnd)
 
             st.session_state['seas_df']=up.create_seas_df(expression, sec_dfs, var_selection, ref_year=ref_year, seas_interval= [seas_interval[0], min(fnd, seas_interval[1])])
             seas_df=st.session_state['seas_df']

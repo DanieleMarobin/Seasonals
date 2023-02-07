@@ -485,16 +485,27 @@ if True:
         for k, v in args_dict.items():
             string = string.replace(k, v)
         return string
+    
+    def dm_isnumeric(string):
+        try:
+            float(string)
+            return True
+        except ValueError:
+            return False
+
 
     def extract_symbols_from_expression(expression):
         # the symbolic package doesn't like spaces in symbols
         # so this function returns a dictionary {original:modified}
-        separators = "-+*/()'^.,"
+        separators = "-+*/()^"
         fo=dm_split(expression,separators)
         fo=[s.strip() for s in fo]
-        fo=[s for s in fo if not s.isnumeric()]
-
+        # fo=[s for s in fo if not s.isnumeric()]
+        fo=[s for s in fo if not dm_isnumeric(s)]
+        
         fo={s: s.replace(' ','_') for s in fo}
+        if '' in fo:
+            del fo['']
 
         return fo
 
