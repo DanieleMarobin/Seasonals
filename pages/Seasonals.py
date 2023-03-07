@@ -171,7 +171,7 @@ if True:
         with st.spinner('Downloading Data...'):
             symbols=up.extract_symbols_from_expression(expression)                
             symbols = symbols_special_cases(symbols, special_cases)
-            print('symbols',symbols)
+            # print('symbols',symbols)
 
             sel_sec=[]
             for s in symbols:
