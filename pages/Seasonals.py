@@ -91,7 +91,6 @@ if True:
         special_cases_r=reverse_dict(special_cases)
         for k,v in sec_dfs.items():
             fo[up.dm_replace(k,special_cases_r)]=v
-
         return fo
 
 # Events
@@ -177,7 +176,7 @@ if True:
             for s in symbols:
                 sel_sec=sel_sec+up.select_securities(ticker_and_letter=up.info_ticker_and_letter(up.symbol_no_offset(s)), cloud_map_dict=cloud_map_dict)
             
-            # sec_dfs = {'w n_2020' : df}            
+            # sec_dfs = {'w n_2020' : df}
             sec_dfs= up.read_security_list(sel_sec, parallel='thread')
             sec_dfs=sec_dfs_special_cases(sec_dfs, special_cases)
 
